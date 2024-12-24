@@ -1,0 +1,17 @@
+meta {
+  name: temperature
+  type: http
+  seq: 7
+}
+
+post {
+  url: http://localhost:8000/api/examples/temperature
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "celsius": 100
+  }
+}

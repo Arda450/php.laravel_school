@@ -18,7 +18,7 @@ class TodosController {
   public function index()
   {
       try {
-          $user = auth()->user();
+          $user = \Auth::user();
           $todos = $user->todos()
               ->with(['user', 'sharedWith'])
               ->get()
@@ -80,7 +80,7 @@ public function getTags() {
 
 
      // Erstelle zuerst das Todo
-     $todo = auth()->user()->todos()->create([
+     $todo = \Auth::user()->todos()->create([
       'title' => $payload['title'],
       'description' => $payload['description'],
       'status' => $payload['status'] ?? 'open',

@@ -17,12 +17,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
   Route::post('/auth/logout', [AuthController::class, 'logout']);
 
   Route::get('/user', [UserController::class, 'show']);
-  Route::patch('/user', [UserController::class, 'update']);
-  Route::put('/user/password', [UserController::class, 'update']);
   Route::delete('/user', [UserController::class, 'destroy']);
+  Route::patch('/user/update', [UserController::class, 'update']);
 
   // Route::get('/todos/{id}', [TodosController::class, 'show']);
   Route::get('/todos', [TodosController::class, 'index']);
+
+  // die create methode wird aufgerufen, wenn diese route verwendet wird
+  // Client (next.js) greift auf '/todos' zu und sendet die Daten an die create methode
   Route::post('/todos', [TodosController::class, 'create']);
   Route::patch('/todos', [TodosController::class, 'update']);
   Route::delete('/todos/{id}', [TodosController::class, 'destroy']);

@@ -50,60 +50,125 @@ class UserController {
 }
 
    // Aktualisiere den Benutzer
-   function update(Request $request) {
+//    function update(Request $request) {
+//     try {
+//         $user = \Auth::user();
+//         // Benutze die validate Methode aus dem User Model
+//         $payload = User::validate($request, true);
+//         \Log::info('Payload nach Validation:', $payload);
+//         // Debug-Logging
+//         \Log::info('Update request received', [
+//             'request_data' => $request->all(),
+//             'user_id' => $user->id
+//         ]);
+
+//         // Überprüfe, ob das aktuelle Passwort bereitgestellt wurde und ob es korrekt ist
+//         if (isset($payload['current_password'])) {
+//             if (!\Hash::check($payload['current_password'], $user->password)) {
+//                 return response()->json([
+//                     'status' => 'error',
+//                     'message' => 'Current password is incorrect.',
+//                 ], 401); // 401 Unauthorized
+//             }
+
+//             // Setze das neue Passwort, wenn es bereitgestellt wurde
+//             if (isset($payload['new_password'])) {
+//                 $user->password = $payload['new_password']; // Das Passwort wird in der booted-Methode gehasht
+//             }
+//         }
+
+//         // Aktualisiere den Benutzernamen und die E-Mail, wenn sie bereitgestellt wurden
+//         if (isset($payload['username'])) {
+//             $user->username = $payload['username'];
+//         }
+        
+//         if (isset($payload['email'])) {
+//             $user->email = $payload['email'];
+//         }
+
+//         if ($request->hasFile('profile_image')) {
+//             $path = $request->file('profile_image')->store('profile_images', 'public');
+//             $user->profile_image = $path;
+//         }
+
+
+        
+//         // Debug-Logging vor dem Speichern
+//         \Log::info('About to save user changes', [
+//             'changes' => $user->getDirty()
+//         ]);
+
+//         // Speichere die Änderungen
+//         $user->save();
+
+//         if (!$user->wasChanged()) {
+//             \Log::warning('Keine Änderungen gespeichert!', $user->getAttributes());
+//         }
+        
+//         // Debug-Logging nach dem Speichern
+//         \Log::info('User updated successfully', [
+//             'user' => $user->toArray()
+//         ]);
+
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => 'User updated successfully.',
+//             'user' => $user,
+//         ], 200);
+//     } catch (ValidationException $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Validation failed',
+//             'errors' => $e->errors(),
+//         ], 422);
+//     } catch (ModelNotFoundException $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'User not found',
+//         ], 404);
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'An error occurred while updating the user.',
+//             'error' => $e->getMessage(),
+//         ], 500);
+//     }
+// }
+
+
+public function update(Request $request)
+{
     try {
         $user = \Auth::user();
-        $payload = User::validate($request, true);
 
-        // Überprüfe, ob das aktuelle Passwort bereitgestellt wurde und ob es korrekt ist
-        if (isset($payload['current_password'])) {
-            if (!\Hash::check($payload['current_password'], $user->password)) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Current password is incorrect.',
-                ], 401); // 401 Unauthorized
-            }
+        $validated = $request->validate([
+            'username' => 'sometimes|string|max:255|unique:users,username,' . $user->id,
+            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'password' => 'sometimes|string|min:8|max:20|confirmed',
+            'profile_image' => 'sometimes|file|image|max:2048',
+        ]);
 
-            // Setze das neue Passwort, wenn es bereitgestellt wurde
-            if (isset($payload['new_password'])) {
-                $user->password = $payload['new_password']; // Das Passwort wird in der booted-Methode gehasht
-            }
+        if (isset($validated['password'])) {
+            $validated['password'] = bcrypt($validated['password']);
         }
 
-        // Aktualisiere den Benutzernamen und die E-Mail, wenn sie bereitgestellt wurden
-        if (isset($payload['username'])) {
-            $user->username = $payload['username'];
-        }
-        
-        if (isset($payload['email'])) {
-            $user->email = $payload['email'];
+        if ($request->hasFile('profile_image')) {
+            $path = $request->file('profile_image')->store('profile_images', 'public');
+            $validated['profile_image'] = $path;
         }
 
-        // Speichere die Änderungen
-        $user->save();
+        $user->update($validated);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'User updated successfully.',
-            'user' => $user,
-        ], 200);
-    } catch (ValidationException $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Validation failed',
-            'errors' => $e->errors(),
-        ], 422);
-    } catch (ModelNotFoundException $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'User not found',
-        ], 404);
+            'message' => 'Profile updated successfully',
+            'user' => $user->fresh(),
+        ]);
     } catch (\Exception $e) {
         return response()->json([
             'status' => 'error',
-            'message' => 'An error occurred while updating the user.',
-            'error' => $e->getMessage(),
-        ], 500);
+            'message' => $e->getMessage(),
+        ], 400);
     }
 }
 

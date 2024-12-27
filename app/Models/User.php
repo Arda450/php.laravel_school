@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Config\Model;
 
-use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
+
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\Request;
@@ -14,22 +14,22 @@ use WendellAdriel\Lift\Attributes\Hidden;
 
 class User extends Model
 {
-    use AuthenticatableTrait;
     use HasApiTokens;
 
     protected $table = 'users';
 
-    #[Column]
-    public string $username;
+    // Fillable Eigenschaften definieren
+    protected $fillable = [
+        'username',
+        'email',
+        'password',
+        'profile_image'
+    ];
 
-    #[Column]
-    public string $email;
-
-    #[Column] #[Hidden]
-    public string $password;
-
-    #[Column]
-    public ?string $profile_image; // Das ? vor string erlaubt null Werte
+    // Versteckte Attribute für Arrays/JSON
+    protected $hidden = [
+        'password'
+    ];
 
     // one-to-many Beziehung. Ein User kann mehrere Artikel haben
     // Laravel erwartet, dass die "articles" Tabelle eine "user_id" spalte hat, die den Benutzer referenziert.
@@ -57,14 +57,38 @@ class User extends Model
     }
 
     static function validate(Request $request, $isUpdate = false) {
-        return $request->validate([
-            'username' => ['sometimes', 'required', 'string', 'max:255'],
-            'email' => ['sometimes', 'required', 'email', 'unique:users,email,' . ($isUpdate ? $request->user()->id : null)],
-            'password' => $isUpdate ? ['nullable', 'string', 'min:8', 'max:20', 'confirmed'] : ['required', 'string', 'min:8', 'max:20', 'confirmed'],
-            'current_password' => ['sometimes', 'required', 'string'],
-            'new_password' => ['sometimes', 'required', 'string', 'min:8', 'confirmed'],
-            'profile_image' => ['nullable', 'string', 'max:255'],
-        ]);
+        // return $request->validate([
+        //     'username' => ['sometimes', 'required', 'string', 'max:255'],
+        //     'email' => ['sometimes', 'required', 'email', 'unique:users,email,' . ($isUpdate ? $request->user()->id : null)],
+        //     'password' => $isUpdate ? ['nullable', 'string', 'min:8', 'max:20', 'confirmed'] : ['required', 'string', 'min:8', 'max:20', 'confirmed'],
+        //     'current_password' => ['sometimes', 'required', 'string'],
+        //     'new_password' => ['sometimes', 'required', 'string', 'min:8', 'confirmed'],
+        //     'profile_image' => ['nullable', 'string', 'max:255'],
+        // ]);
+
+
+        ######################
+        $rules = [];
+    
+        // Nur Regeln für die vorhandenen Felder hinzufügen
+        if ($request->has('username')) {
+            $rules['username'] = ['required', 'string', 'max:255'];
+        }
+        
+        if ($request->has('email')) {
+            $rules['email'] = ['required', 'email', 'unique:users,email,' .  ($isUpdate ? \Auth::id() : null)];
+        }
+        
+        if ($request->has('password')) {
+            $rules['password'] = ['required', 'string', 'min:8', 'max:20', 'confirmed'];
+            $rules['current_password'] = ['sometimes', 'required', 'string'];
+        }
+        
+        if ($request->has('profile_image')) {
+            $rules['profile_image'] = ['required', 'string', 'max:255'];
+        }
+    
+        return $request->validate($rules);
     }
 
     // booted wird aufgerufen, wenn das Model geladen wird
@@ -79,4 +103,5 @@ class User extends Model
             }
         });
     }
+
 }

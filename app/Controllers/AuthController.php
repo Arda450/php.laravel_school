@@ -56,4 +56,5 @@ class AuthController {
       'user' => $user,
     ], 200);
   }
+
 }

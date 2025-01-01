@@ -12,9 +12,11 @@ use Laravel\Sanctum\HasApiTokens;
 use WendellAdriel\Lift\Attributes\Column;
 use WendellAdriel\Lift\Attributes\Hidden;
 
-class User extends Model
+use Illuminate\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+class User extends Model implements AuthenticatableContract
 {
-    use HasApiTokens;
+    use Authenticatable, HasApiTokens;
 
     protected $table = 'users';
 

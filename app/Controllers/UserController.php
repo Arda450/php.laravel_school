@@ -145,10 +145,20 @@ public function update(Request $request)
             'username' => 'sometimes|string|max:255|unique:users,username,' . $user->id,
             'email' => 'sometimes|email|unique:users,email,' . $user->id,
             'password' => 'sometimes|string|min:8|max:20|confirmed',
+            'current_password' => 'required_with:password|string',
             'profile_image' => 'sometimes|file|image|max:2048',
         ]);
 
-        if (isset($validated['password'])) {
+         // Überprüfung des aktuellen Passworts
+         if (isset($validated['password'])) {
+            if (!\Hash::check($validated['current_password'], $user->password)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Current password is incorrect',
+                ], 400);
+            }
+
+            // Neues Passwort hashen
             $validated['password'] = bcrypt($validated['password']);
         }
 

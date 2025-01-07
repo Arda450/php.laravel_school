@@ -158,9 +158,13 @@ public function update(Request $request)
                 ], 400);
             }
 
-            // Neues Passwort hashen
-            $validated['password'] = bcrypt($validated['password']);
+            // Neues Passwort in der booted-hook hashen
+            $user->password = $validated['password'];
         }
+
+            // Entferne Felder, die nicht in der Datenbank gespeichert werden sollen
+            unset($validated['current_password']);
+            unset($validated['password_confirmation']);
 
         if ($request->hasFile('profile_image')) {
             $path = $request->file('profile_image')->store('profile_images', 'public');

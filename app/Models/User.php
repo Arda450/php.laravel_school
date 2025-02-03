@@ -87,7 +87,7 @@ class User extends Model implements AuthenticatableContract
         }
         
         if ($request->has('profile_image')) {
-            $rules['profile_image'] = ['required', 'string', 'max:255'];
+            $rules['profile_image'] = ['required', 'string'];
         }
     
         return $request->validate($rules);

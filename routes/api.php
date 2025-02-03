@@ -16,9 +16,14 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::middleware(['auth:sanctum'])->group(function () {
   Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-  Route::get('/user', [UserController::class, 'show']);
-  Route::delete('/user', [UserController::class, 'destroy']);
-  Route::patch('/user/update', [UserController::class, 'update']);
+
+  Route::delete('/user/profile', [UserController::class, 'destroy']);
+  Route::get('/user/profile', [UserController::class, 'show']);
+
+  Route::patch('/user/username', [UserController::class, 'updateUsername']);
+  Route::patch('/user/email', [UserController::class, 'updateEmail']);
+  Route::patch('/user/password', [UserController::class, 'updatePassword']);
+  Route::patch('/user/avatar', [UserController::class, 'updateAvatar']);
 
   // Route::get('/todos/{id}', [TodosController::class, 'show']);
   Route::get('/todos', [TodosController::class, 'index']);

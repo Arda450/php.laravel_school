@@ -13,20 +13,11 @@ class AuthController {
 
     // Überprüfung, ob der Benutzer existiert
     $user = User::where('email', $email)->first();
-    if (!$user) {
-      // Rückgabe einer Fehlermeldung, falls kein Benutzer mit dieser E-Mail existiert
+    if (!$user || !\Hash::check($password, $user->password)) {
+      // Rückgabe einer Fehlermeldung, falls kein Benutzer mit dieser E-Mail existiert oder das Passwort falsch ist
       return response()->json([
         'status' => 'error',
-        'message' => 'No such user found',
-      ], 404);
-    }
-
-    // Überprüfung, ob das Passwort korrekt ist
-    if (!\Hash::check($password, $user->password)) {
-      // Rückgabe einer Fehlermeldung, falls das Passwort falsch ist
-      return response()->json([
-        'status' => 'error',
-        'message' => 'Incorrect password',
+        'message' => 'Invalid email or password',
       ], 401);
     }
 
@@ -38,8 +29,14 @@ class AuthController {
       'status' => 'success',
       'message' => 'Login successful',
       'token' => $token->plainTextToken,
-      'user' => $user,
-    ], 200);
+      'user' => [
+        'id' => (string)$user->id,
+        'username' => $user->username,
+        'email' => $user->email,
+        'profile_image' => $user->profile_image,
+        'token' => $token->plainTextToken
+    ]
+], 200);
   }
 
   function logout(Request $request) {

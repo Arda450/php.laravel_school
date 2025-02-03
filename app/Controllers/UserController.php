@@ -10,12 +10,22 @@ use Illuminate\Validation\ValidationException;
 use Log;
 
 class UserController {
-  function show(Request $request) {
-    return response()->json([
-      'status' => 'success',
-      'user' => \Auth::user(),
-  ], 200);
-  }
+    function show(Request $request) {
+        try {
+            $user = \Auth::user()->fresh();
+            $user->profile_image_url = $user->profile_image_url;
+            return response()->json([
+                'status' => 'success',
+                'user' => $user
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
 
   // // Erstelle einen neuen Benutzer
@@ -136,66 +146,240 @@ class UserController {
 // }
 
 
-public function update(Request $request)
+######################################
+
+// public function update(Request $request)
+// {
+//     try {
+//         $user = \Auth::user();
+
+//         $validated = $request->validate([
+//             'username' => 'sometimes|string|max:255|unique:users,username,' . $user->id,
+//             'email' => 'sometimes|email|unique:users,email,' . $user->id,
+//             'password' => 'sometimes|string|min:8|max:20|confirmed',
+//             'current_password' => 'required_with:password|string',
+//             'profile_image' => 'sometimes|file|image|max:2048',
+//         ]);
+
+//          // Überprüfung des aktuellen Passworts
+//          if (isset($validated['password'])) {
+//             if (!\Hash::check($validated['current_password'], $user->password)) {
+//                 return response()->json([
+//                     'status' => 'error',
+//                     'message' => 'Current password is incorrect',
+//                 ], 400);
+//             }
+
+//             // Neues Passwort in der booted-hook hashen
+//             $user->password = $validated['password'];
+//         }
+
+//             // Entferne Felder, die nicht in der Datenbank gespeichert werden sollen
+//             unset($validated['current_password']);
+//             unset($validated['password_confirmation']);
+
+//         if ($request->hasFile('profile_image')) {
+//             $path = $request->file('profile_image')->store('profile_images', 'public');
+//             $validated['profile_image'] = $path;
+//         }
+
+//         $user->update($validated);
+
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => 'Profile updated successfully',
+//             'user' => $user->fresh(),
+//         ]);
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => $e->getMessage(),
+//         ], 400);
+//     }
+// }
+
+################################################################
+
+
+public function updateUsername(Request $request)
+{
+    try {
+        $user = \Auth::user();
+        $validated = $request->validate([
+            'username' => 'required|string|max:255|unique:users,username,' . $user->id,
+        ]);
+
+        // Debug-Logging
+        \Log::info('Username update attempt:', [
+            'user_id' => $user->id,
+            'old_username' => $user->username,
+            'new_username' => $validated['username']
+        ]);
+
+        $user->username = $validated['username'];
+        $user->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Username updated successfully',
+            'user' => $user->fresh()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ], 400);
+    }
+}
+
+public function updateEmail(Request $request)
+{
+    try {
+        $user = \Auth::user();
+        $validated = $request->validate([
+            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+        ]);
+
+        // // Debug-Logging
+        // \Log::info('Username update attempt:', [
+        //     'user_id' => $user->id,
+        //     'old_username' => $user->username,
+        //     'new_username' => $validated['email']
+        // ]);
+
+        $user->email = $validated['email'];
+        $user->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Email updated successfully',
+            'user' => $user->fresh()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ], 400);
+    }
+}
+
+public function updatePassword(Request $request)
 {
     try {
         $user = \Auth::user();
 
         $validated = $request->validate([
-            'username' => 'sometimes|string|max:255|unique:users,username,' . $user->id,
-            'email' => 'sometimes|email|unique:users,email,' . $user->id,
-            'password' => 'sometimes|string|min:8|max:20|confirmed',
-            'current_password' => 'required_with:password|string',
-            'profile_image' => 'sometimes|file|image|max:2048',
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:8|max:20|confirmed',
+            'password_confirmation' => 'required|string'
         ]);
 
-         // Überprüfung des aktuellen Passworts
-         if (isset($validated['password'])) {
-            if (!\Hash::check($validated['current_password'], $user->password)) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Current password is incorrect',
-                ], 400);
-            }
+        // // Debug-Logging
+        // \Log::info('Username update attempt:', [
+        //     'user_id' => $user->id,
+        //     'old_username' => $user->username,
+        //     'new_username' => $validated['email']
+        // ]);
 
-            // Neues Passwort in der booted-hook hashen
-            $user->password = $validated['password'];
+        // Überprüfung des aktuellen Passworts
+        if (!\Hash::check($validated['current_password'], $user->password)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Current password is incorrect'
+            ], 400);
         }
 
-            // Entferne Felder, die nicht in der Datenbank gespeichert werden sollen
-            unset($validated['current_password']);
-            unset($validated['password_confirmation']);
-
-        if ($request->hasFile('profile_image')) {
-            $path = $request->file('profile_image')->store('profile_images', 'public');
-            $validated['profile_image'] = $path;
-        }
-
-        $user->update($validated);
+        // Setze hier das neue Passwort
+        $user->password = $validated['password'];
+        $user->save();
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Profile updated successfully',
-            'user' => $user->fresh(),
+            'message' => 'Password updated successfully',
+            'user' => $user
+        ]);
+     } catch (\Exception $e) {
+        \Log::error('Password update error:', [
+            'error' => $e->getMessage()
+        ]);
+        
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ], 400);
+    }
+}
+
+public function updateAvatar(Request $request) {
+    try {
+        $user = \Auth::user();
+        $validated = $request->validate([
+            'profile_image' => 'required|string',
+        ]);
+
+        $user->profile_image = $validated['profile_image'];
+        $user->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Avatar updated successfully',
+            'user' => $user->fresh()
         ]);
     } catch (\Exception $e) {
         return response()->json([
             'status' => 'error',
-            'message' => $e->getMessage(),
+            'message' => $e->getMessage()
         ], 400);
     }
 }
 
 
-function destroy(Request $request) {
-  try {
-      $user = \Auth::user();
-      $user->delete();
-      return response()->json([
-          'status' => 'success',
-          'message' => 'User deleted successfully.',
+
+
+
+
+
+public function destroy(Request $request) {
+    try {
+        $user = \Auth::user();
+      
+        $validated = $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        if ($validated['email'] !== $user->email) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Email does not match our records.',
+        ], 400);
+    }
+
+
+    // Füge Logging hinzu
+    \Log::info('Attempting to delete user:', [
+        'user_id' => $user->id,
+        'email' => $user->email
+    ]);
+
+        $user->tokens()->delete();
+
+        $user->delete();
+
+         // Füge Logging hinzu
+         \Log::info('User deleted successfully');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User deleted successfully.',
       ], 200);
   } catch (\Exception $e) {
+
+     // Füge Fehler-Logging hinzu
+     \Log::error('Error deleting user:', [
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+    ]);
+
       return response()->json([
           'status' => 'error',
           'message' => 'An error occurred while deleting the user.',

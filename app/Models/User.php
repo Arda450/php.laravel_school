@@ -74,7 +74,7 @@ class User extends Model implements AuthenticatableContract
     
         // Nur Regeln für die vorhandenen Felder hinzufügen
         if ($request->has('username')) {
-            $rules['username'] = ['required', 'string', 'max:255'];
+            $rules['username'] = ['required', 'string', 'max:20', 'unique:users,username,' .  ($isUpdate ? \Auth::id() : null)                                                                              ];
         }
         
         if ($request->has('email')) {

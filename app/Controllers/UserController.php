@@ -59,146 +59,6 @@ class UserController {
     }
 }
 
-   // Aktualisiere den Benutzer
-//    function update(Request $request) {
-//     try {
-//         $user = \Auth::user();
-//         // Benutze die validate Methode aus dem User Model
-//         $payload = User::validate($request, true);
-//         \Log::info('Payload nach Validation:', $payload);
-//         // Debug-Logging
-//         \Log::info('Update request received', [
-//             'request_data' => $request->all(),
-//             'user_id' => $user->id
-//         ]);
-
-//         // Überprüfe, ob das aktuelle Passwort bereitgestellt wurde und ob es korrekt ist
-//         if (isset($payload['current_password'])) {
-//             if (!\Hash::check($payload['current_password'], $user->password)) {
-//                 return response()->json([
-//                     'status' => 'error',
-//                     'message' => 'Current password is incorrect.',
-//                 ], 401); // 401 Unauthorized
-//             }
-
-//             // Setze das neue Passwort, wenn es bereitgestellt wurde
-//             if (isset($payload['new_password'])) {
-//                 $user->password = $payload['new_password']; // Das Passwort wird in der booted-Methode gehasht
-//             }
-//         }
-
-//         // Aktualisiere den Benutzernamen und die E-Mail, wenn sie bereitgestellt wurden
-//         if (isset($payload['username'])) {
-//             $user->username = $payload['username'];
-//         }
-        
-//         if (isset($payload['email'])) {
-//             $user->email = $payload['email'];
-//         }
-
-//         if ($request->hasFile('profile_image')) {
-//             $path = $request->file('profile_image')->store('profile_images', 'public');
-//             $user->profile_image = $path;
-//         }
-
-
-        
-//         // Debug-Logging vor dem Speichern
-//         \Log::info('About to save user changes', [
-//             'changes' => $user->getDirty()
-//         ]);
-
-//         // Speichere die Änderungen
-//         $user->save();
-
-//         if (!$user->wasChanged()) {
-//             \Log::warning('Keine Änderungen gespeichert!', $user->getAttributes());
-//         }
-        
-//         // Debug-Logging nach dem Speichern
-//         \Log::info('User updated successfully', [
-//             'user' => $user->toArray()
-//         ]);
-
-//         return response()->json([
-//             'status' => 'success',
-//             'message' => 'User updated successfully.',
-//             'user' => $user,
-//         ], 200);
-//     } catch (ValidationException $e) {
-//         return response()->json([
-//             'status' => 'error',
-//             'message' => 'Validation failed',
-//             'errors' => $e->errors(),
-//         ], 422);
-//     } catch (ModelNotFoundException $e) {
-//         return response()->json([
-//             'status' => 'error',
-//             'message' => 'User not found',
-//         ], 404);
-//     } catch (\Exception $e) {
-//         return response()->json([
-//             'status' => 'error',
-//             'message' => 'An error occurred while updating the user.',
-//             'error' => $e->getMessage(),
-//         ], 500);
-//     }
-// }
-
-
-######################################
-
-// public function update(Request $request)
-// {
-//     try {
-//         $user = \Auth::user();
-
-//         $validated = $request->validate([
-//             'username' => 'sometimes|string|max:255|unique:users,username,' . $user->id,
-//             'email' => 'sometimes|email|unique:users,email,' . $user->id,
-//             'password' => 'sometimes|string|min:8|max:20|confirmed',
-//             'current_password' => 'required_with:password|string',
-//             'profile_image' => 'sometimes|file|image|max:2048',
-//         ]);
-
-//          // Überprüfung des aktuellen Passworts
-//          if (isset($validated['password'])) {
-//             if (!\Hash::check($validated['current_password'], $user->password)) {
-//                 return response()->json([
-//                     'status' => 'error',
-//                     'message' => 'Current password is incorrect',
-//                 ], 400);
-//             }
-
-//             // Neues Passwort in der booted-hook hashen
-//             $user->password = $validated['password'];
-//         }
-
-//             // Entferne Felder, die nicht in der Datenbank gespeichert werden sollen
-//             unset($validated['current_password']);
-//             unset($validated['password_confirmation']);
-
-//         if ($request->hasFile('profile_image')) {
-//             $path = $request->file('profile_image')->store('profile_images', 'public');
-//             $validated['profile_image'] = $path;
-//         }
-
-//         $user->update($validated);
-
-//         return response()->json([
-//             'status' => 'success',
-//             'message' => 'Profile updated successfully',
-//             'user' => $user->fresh(),
-//         ]);
-//     } catch (\Exception $e) {
-//         return response()->json([
-//             'status' => 'error',
-//             'message' => $e->getMessage(),
-//         ], 400);
-//     }
-// }
-
-################################################################
 
 
 public function updateUsername(Request $request)
@@ -206,7 +66,19 @@ public function updateUsername(Request $request)
     try {
         $user = \Auth::user();
         $validated = $request->validate([
-            'username' => 'required|string|max:255|unique:users,username,' . $user->id,
+            // username darf nicht länger als 20 Zeichen sein und muss eindeutig sein
+            'username' => [ 'required',
+                'string',
+                'max:20',
+                'unique:users,username,' . $user->id,
+                function ($attribute, $value, $fail) use ($user) {
+                // Prüfe, ob die neue username anders ist als die aktuelle
+                if ($value === $user->username) {
+
+                    $fail('New username cannot be the same as the current username.');
+                }
+            },
+        ],
         ]);
 
         // Debug-Logging
@@ -236,8 +108,21 @@ public function updateEmail(Request $request)
 {
     try {
         $user = \Auth::user();
+        
+        // Erweiterte Validierung
         $validated = $request->validate([
-            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                'unique:users,email,' . $user->id,
+                function ($attribute, $value, $fail) use ($user) {
+                    // Prüfe, ob die neue E-Mail anders ist als die aktuelle
+                    if ($value === $user->email) {
+                        $fail('New email cannot be the same as the current email.');
+                    }
+                },
+            ],
         ]);
 
         // // Debug-Logging
@@ -265,12 +150,38 @@ public function updateEmail(Request $request)
 
 public function updatePassword(Request $request)
 {
+    // try {
+    //     $user = \Auth::user();
+
+    //     $validated = $request->validate([
+    //         'current_password' => 'required|string',
+    //         'password' => 'required|string|min:8|max:20|confirmed',
+    //         'password_confirmation' => 'required|string'
+    //     ]);
+
     try {
         $user = \Auth::user();
 
         $validated = $request->validate([
             'current_password' => 'required|string',
-            'password' => 'required|string|min:8|max:20|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'max:20',
+                'confirmed',
+                function ($attribute, $value, $fail) use ($request, $user) {
+                    // Prüfe, ob das aktuelle Passwort korrekt ist
+                    if (!\Hash::check($request->current_password, $user->password)) {
+                        $fail('Current password is incorrect');
+                    }
+                    // Prüfe, ob das neue Passwort anders ist als das aktuelle
+                    if (\Hash::check($value, $user->password)) {
+                        $fail('New password cannot be the same as the current password.');
+                    }
+
+                },
+            ],
             'password_confirmation' => 'required|string'
         ]);
 
@@ -281,7 +192,7 @@ public function updatePassword(Request $request)
         //     'new_username' => $validated['email']
         // ]);
 
-        // Überprüfung des aktuellen Passworts
+        // Überprüfung des aktuellen Passworts. wird im UI als toast error angezeigt
         if (!\Hash::check($validated['current_password'], $user->password)) {
             return response()->json([
                 'status' => 'error',

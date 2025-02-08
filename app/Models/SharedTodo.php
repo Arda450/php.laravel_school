@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Http\Request;
 use WendellAdriel\Lift\Attributes\Column;
 
+// dient als pivot table für die todos und die users
+// verwaltet die metadaten der geteilten todos (wer hat was geteilt, wann, an wen)
+// die sharedtodoscontroller.php datei konnte gelöscht werden, weil alles in den todoscontroller integriert wurde 
 
 class SharedTodo extends Model {
     protected $fillable = ['todo_id', 'shared_with_user_id', 'shared_by_user_id'];

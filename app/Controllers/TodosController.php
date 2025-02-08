@@ -75,7 +75,8 @@ public function getTags() {
         'tags.*.id' => 'required|string',
         'tags.*.text' => 'required|in:Work,Personal,School,Urgent,Low Priority',
         'due_date' => 'nullable|date|after_or_equal:today',
-        'shared_with' => 'nullable|string|exists:users,username'
+        'shared_with' => 'nullable|array', // Geändert zu array
+        'shared_with.*' => 'string|exists:users,username' // Validierung für jedes Array-Element
     ]);
 
 
@@ -89,15 +90,16 @@ public function getTags() {
   ]);
 
     
-        // Füge Sharing hinzu, wenn vorhanden
-        if (!empty($payload['shared_with'])) {
-          $sharedUser = User::where('username', $payload['shared_with'])->first();
-          if ($sharedUser) {
+         // Teilen mit mehreren Benutzern
+         if (!empty($payload['shared_with'])) {
+          $sharedUsers = User::whereIn('username', $payload['shared_with'])->get();
+          foreach ($sharedUsers as $sharedUser) {
               $todo->sharedWith()->attach($sharedUser->id, [
                   'shared_by_user_id' => auth()->id()
               ]);
           }
       }
+
 
     // das erfolgreich erstellte todo wird zurückgegeben
     return response()->json([
@@ -122,16 +124,27 @@ public function getTags() {
   }
 }
 
-// create endet hier
+
 
   // aktualisieren eines bestehenden todos
   function update(Request $request) {
     try {
        // Die ID des zu aktualisierenden Todos wird aus der Anfrage extrahiert.
     $id = $request->input('id');
-    Log::info('Processing update for todo ID: ' . $id);
     // Die NutzerEINGABEN werden validiert und die Daten werden in $payload gespeichert.
     // $payload = Todo::validate($request);
+
+    $user = \Auth::user();
+
+     // Finde Todo mit Zugriffsberechtigung
+     $todo = Todo::where('id', $id)
+     ->where(function($query) use ($user) {
+         $query->where('user_id', $user->id)
+             ->orWhereHas('sharedWith', function($q) use ($user) {
+                 $q->where('shared_with_user_id', $user->id);
+             });
+     })
+     ->firstOrFail();
 
     $payload = $request->validate([
       'title' => 'sometimes|required|min:1|max:200',
@@ -141,10 +154,9 @@ public function getTags() {
       'tags.*.id' => 'required|string',
       'tags.*.text' => 'required|in:Work,Personal,School,Urgent,Low Priority',
       'due_date' => 'nullable|date|after_or_equal:today', // due_date muss ein gültiges Datum sein und heute oder später
+      // 'shared_with' => 'nullable|array',
+      // 'shared_with.*' => 'string|exists:users,username'
     ]);
-
-     // To-Do für den authentifizierten Benutzer finden oder Fehler angeben
-    $todo = \Auth::user()->todos()->findOrFail($id);
 
     // Tags als JSON speichern, falls angegeben
     if ($request->has('tags')) {
@@ -159,14 +171,7 @@ public function getTags() {
     return response()->json([
       'status' => 'success',
       'message' => 'To-Do updated successfully',
-      'todo' => [
-                'id' => $todo->id,
-                'title' => $todo->title,
-                'description' => $todo->description,
-                'due_date' => $todo->due_date ? Carbon::parse($todo->due_date)->format('d.m.Y') : null,
-                'status' => $todo->status,
-                'tags' => is_string($todo->tags) ? json_decode($todo->tags, true) : $todo->tags
-            ]
+      'todo' => $todo->formatForResponse()
   ], 200);
 
   } catch (ValidationException $e) {
@@ -197,20 +202,29 @@ public function getTags() {
   }
 }
 
-// update endet hier
+
 
   // Löschen eines Todos
   public function destroy($id) {
     try {
-      // ID des zu löschenden Todos aus der Anfrage
-      $todo = \Auth::user()->todos()->findOrFail($id);
+        $user = \Auth::user();
+       // Suche das Todo unabhängig vom Besitzer
+        $todo = Todo::findOrFail($id);
+        
+        // Prüfe ob der User der Besitzer ist
+        if ($todo->user_id !== $user->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized: You can only delete your own todos'
+            ], 403);
+        }
+        
       // Löschen des Todos
       $todo->delete();
 
       return response()->json([
         'status' => 'success',
         'message' => 'To-Do deleted successfully',
-        // 'todo' => $todo,
       ], 200);
 
     } catch (ModelNotFoundException $e) {
@@ -229,7 +243,7 @@ public function getTags() {
     }
   }
 
-// destroy endet hier
+
 
 
 // für das suchen eines einzelnen todos
@@ -262,6 +276,5 @@ public function getTags() {
         ], 500);
     }
   }
-// show endet hier
 
 }

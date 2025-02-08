@@ -27,6 +27,18 @@ class Todo extends Model {
     return $this->belongsTo(User::class);
 }
 
+public function getSharedWithAttribute()
+{
+    return $this->sharedWith()->pluck('username');
+}
+
+// Die canAccess Methode stellt sicher, dass nur berechtigte Benutzer Änderungen vornehmen können
+
+  public function canAccess(User $user): bool
+  {
+      return $this->user_id === $user->id || $this->sharedWith->contains($user);
+  }
+
   public function sharedWith(): BelongsToMany {
     return $this->belongsToMany(User::class, 'shared_todos', 'todo_id', 'shared_with_user_id')
     ->withPivot('shared_by_user_id')
@@ -70,7 +82,7 @@ class Todo extends Model {
         'due_date' => $this->due_date ? Carbon::parse($this->due_date)->format('d.m.Y') : null,
         'status' => $this->status,
         'tags' => is_string($this->tags) ? json_decode($this->tags, true) : $this->tags,
-        'shared_with' => $this->sharedWith()->pluck('username'),
+        'shared_with' => $this->sharedWith()->pluck('username')->toArray(),
         'shared_by' => $this->user->username,
         'created_at' => $this->created_at,
         'updated_at' => $this->updated_at

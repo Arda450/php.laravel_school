@@ -2,8 +2,6 @@
 
 
 use App\Controllers\AuthController;
-use App\Controllers\MailsController;
-use App\Controllers\UploadsController;
 use App\Controllers\UserController;
 use App\Controllers\TodosController;
 use Illuminate\Support\Facades\Route;

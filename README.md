@@ -216,3 +216,7 @@ SQLite Datenbank mit Laravel Eloquent ORM
 - Shadcn/ui für UI-Komponenten
 - Dark/Light Mode Unterstützung
 - Responsive Design für alle Geräte
+
+### Fehler
+
+- Der Fehler mit den Typen im todos/[id]/route.ts konnte nicht gelöst werden. Deswegen ist der npm run build Befehl nicht möglich.

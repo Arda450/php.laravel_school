@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 use Log;
 
 class UserController {
-    function show(Request $request) {
+    function show() {
         try {
             $user = \Auth::user()->fresh();
             $user->profile_image_url = $user->profile_image_url;
@@ -25,14 +25,6 @@ class UserController {
             ], 500);
         }
     }
-
-
-
-  // // Erstelle einen neuen Benutzer
-  // function create(Request $request) {
-  //   $payload = User::validate($request);
-  //   return User::create($payload);
-  // }
 
   // Erstelle einen neuen Benutzer
   function create(Request $request) {
@@ -66,7 +58,6 @@ public function updateUsername(Request $request)
     try {
         $user = \Auth::user();
         $validated = $request->validate([
-            // username darf nicht länger als 20 Zeichen sein und muss eindeutig sein
             'username' => [ 'required',
                 'string',
                 'max:20',
@@ -150,15 +141,6 @@ public function updateEmail(Request $request)
 
 public function updatePassword(Request $request)
 {
-    // try {
-    //     $user = \Auth::user();
-
-    //     $validated = $request->validate([
-    //         'current_password' => 'required|string',
-    //         'password' => 'required|string|min:8|max:20|confirmed',
-    //         'password_confirmation' => 'required|string'
-    //     ]);
-
     try {
         $user = \Auth::user();
 
@@ -357,7 +339,7 @@ public function destroy(Request $request) {
         return response()->json([
             'status' => 'success',
             'users' => $users
-        ]);  // Explizit JSON-Header setzen
+        ]); 
 
     } catch (\Exception $e) {
         Log::error('User search error:', ['error' => $e->getMessage()]);

@@ -22,7 +22,7 @@ class AuthController {
       ], 401);
     }
   
-    // Token nur einmal erstellen
+    // Token erstellen
     $token = $user->createToken('bearer')->plainTextToken;
 
   

@@ -137,6 +137,9 @@ cd portfolio_php
 # Abhängigkeiten installieren
 composer install
 
+# Führe die Migrationen aus
+php artisan migrate
+
 # Datenbank seeden
 php artisan db:seed
 
@@ -154,13 +157,26 @@ cd portfolio_next.js
 # Abhängigkeiten installieren
 npm install
 
+# .env Datei erstellen
+# Erstelle eine .env Datei im Root-Verzeichnis mit folgendem Inhalt:
+BACKEND_URL=http://127.0.0.1:8000
+AUTH_URL=http://127.0.0.1:3000
+AUTH_SECRET=4d6f88334ed8065389045523147659cf785a675023ed84cf536d639e4e8f2f11
+
+
 # Entwicklungsserver starten
 npm run dev
 ```
 
-### Login Credentials
+### Login Information
 
-- email: alpha@gmail.com
+- email: alex.dev@example.com
+- Password: password
+
+- email: arda.coder@example.com
+- Password: password
+
+- email: todo.master@example.com
 - Password: password
 
 ## 📖 Dokumentation

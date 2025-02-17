@@ -39,13 +39,6 @@ class User extends Model implements AuthenticatableContract
     //   return $this->hasMany(Article::class);
     // }
 
-    // one-to-many Beziehung. Ein User kann mehrere Kommentare haben
-    // Laravel erwartet, dass die "comments" Tabelle eine "user_id" spalte hat, die den Benutzer referenziert.
-
-    // function comments(): HasMany|Comment {
-    //   return $this->hasMany(Comment::class);
-    // }
-
     public function todos(): HasMany
     {
         return $this->hasMany(Todo::class, 'user_id');
@@ -59,17 +52,6 @@ class User extends Model implements AuthenticatableContract
     }
 
     static function validate(Request $request, $isUpdate = false) {
-        // return $request->validate([
-        //     'username' => ['sometimes', 'required', 'string', 'max:255'],
-        //     'email' => ['sometimes', 'required', 'email', 'unique:users,email,' . ($isUpdate ? $request->user()->id : null)],
-        //     'password' => $isUpdate ? ['nullable', 'string', 'min:8', 'max:20', 'confirmed'] : ['required', 'string', 'min:8', 'max:20', 'confirmed'],
-        //     'current_password' => ['sometimes', 'required', 'string'],
-        //     'new_password' => ['sometimes', 'required', 'string', 'min:8', 'confirmed'],
-        //     'profile_image' => ['nullable', 'string', 'max:255'],
-        // ]);
-
-
-        ######################
         $rules = [];
     
         // Nur Regeln für die vorhandenen Felder hinzufügen

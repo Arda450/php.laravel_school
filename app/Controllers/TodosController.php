@@ -75,12 +75,12 @@ public function getTags() {
         'tags.*.id' => 'required|string',
         'tags.*.text' => 'required|in:Work,Personal,School,Urgent,Low Priority',
         'due_date' => 'nullable|date|after_or_equal:today',
-        'shared_with' => 'nullable|array', // Geändert zu array
-        'shared_with.*' => 'string|exists:users,username' // Validierung für jedes Array-Element
+        'shared_with' => 'nullable|array',
+        'shared_with.*' => 'string|exists:users,username' 
     ]);
 
 
-     // Erstelle zuerst das Todo
+     // erstelle das todo
      $todo = \Auth::user()->todos()->create([
       'title' => $payload['title'],
       'description' => $payload['description'],
@@ -90,7 +90,7 @@ public function getTags() {
   ]);
 
     
-         // Teilen mit mehreren Benutzern
+         // teile mit mehreren benutzern
          if (!empty($payload['shared_with'])) {
           $sharedUsers = User::whereIn('username', $payload['shared_with'])->get();
           foreach ($sharedUsers as $sharedUser) {
@@ -108,14 +108,14 @@ public function getTags() {
       'todo' => $todo->formatForResponse(),
     ], 201);
   } catch (ValidationException $e) {
-    // Rückgabe von Validierungsfehlern
+  
     return response()->json([
       'status' => 'error',
       'message' => 'Validation failed',
       'errors' => $e->errors(),
     ], 422);
   } catch (\Exception $e) {
-    // Rückgabe von Validierungsfehlern
+  
     return response()->json([
       'status' => 'error',
       'message' => 'An error occured while creating the To-Do',
@@ -131,12 +131,9 @@ public function getTags() {
     try {
        // Die ID des zu aktualisierenden Todos wird aus der Anfrage extrahiert.
     $id = $request->input('id');
-    // Die NutzerEINGABEN werden validiert und die Daten werden in $payload gespeichert.
-    // $payload = Todo::validate($request);
 
     $user = \Auth::user();
-
-     // Finde Todo mit Zugriffsberechtigung
+ // Finde Todo mit Zugriffsberechtigung
      $todo = Todo::where('id', $id)
      ->where(function($query) use ($user) {
          $query->where('user_id', $user->id)
@@ -154,8 +151,6 @@ public function getTags() {
       'tags.*.id' => 'required|string',
       'tags.*.text' => 'required|in:Work,Personal,School,Urgent,Low Priority',
       'due_date' => 'nullable|date|after_or_equal:today', // due_date muss ein gültiges Datum sein und heute oder später
-      // 'shared_with' => 'nullable|array',
-      // 'shared_with.*' => 'string|exists:users,username'
     ]);
 
     // Tags als JSON speichern, falls angegeben
@@ -219,7 +214,6 @@ public function getTags() {
             ], 403);
         }
         
-      // Löschen des Todos
       $todo->delete();
 
       return response()->json([
@@ -228,18 +222,17 @@ public function getTags() {
       ], 200);
 
     } catch (ModelNotFoundException $e) {
-      // To-Do wurde nicht gefunden
       return response()->json([
         'status' => 'error',
         'message' => 'To-Do not found',
       ], 404);
 
     } catch (\Exception $e) {
-      // Fehlermeldung für nicht gefundenes oder nicht löschbares To-Do
+      
       return response()->json([
         'status' => 'error',
         'message' => 'To-Do could not be deleted',
-      ], 500); // 500 = Serverfehler
+      ], 500);
     }
   }
 
@@ -259,7 +252,6 @@ public function getTags() {
                 'message' => 'Unauthorized access'
             ], 403);
         }
-        // Sonst gebe das formatierte Todo zurück
         return response()->json([
             'status' => 'success',
             'todo' => $todo->formatForResponse()

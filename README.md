@@ -161,7 +161,7 @@ npm install
 # Erstelle eine .env Datei im Root-Verzeichnis mit folgendem Inhalt:
 BACKEND_URL=http://127.0.0.1:8000
 AUTH_URL=http://127.0.0.1:3000
-AUTH_SECRET=4d6f88334ed8065389045523147659cf785a675023ed84cf536d639e4e8f2f11
+AUTH_SECRET=your_generated_secret_here
 
 
 # Entwicklungsserver starten
